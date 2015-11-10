@@ -96,13 +96,16 @@ func groupByService(entries interface{}, project string) (map[string][]interface
 	for i := 0; i < entriesVal.Len(); i++ {
 		v := reflect.Indirect(entriesVal.Index(i)).Interface()
 		labels := entriesVal.Index(i).Elem().FieldByName("Labels")
-		projectName := labels.MapIndex(reflect.ValueOf("com.docker.compose.project"))
-		if projectName.Kind() == reflect.String && projectName.String() == project {
-			value := labels.MapIndex(reflect.ValueOf("com.docker.compose.service"))
-			if value.Kind() == reflect.String {
-				groups[value.String()] = append(groups[value.String()], v)
-			}
-	  }
+		apptype := labels.MapIndex(reflect.ValueOf("apptype"))
+		if apptype.Kind() == reflect.String && apptype.String() == "webapp" {
+			projectName := labels.MapIndex(reflect.ValueOf("com.docker.compose.project"))
+			if projectName.Kind() == reflect.String && projectName.String() == project {
+				value := labels.MapIndex(reflect.ValueOf("com.docker.compose.service"))
+				if value.Kind() == reflect.String {
+					groups[value.String()] = append(groups[value.String()], v)
+				}
+		  }
+		}
 	}
 	return groups, nil
 }
