@@ -84,6 +84,29 @@ func groupBy(entries interface{}, key string) (map[string][]interface{}, error) 
 	})
 }
 
+// groupBy groups a generic array or slice by the path property key
+func groupByService(entries interface{}, project string) (map[string][]interface{}, error) {
+	entriesVal, err := getArrayValues("groupByService", entries)
+
+	if err != nil {
+		return nil, err
+	}
+
+	groups := make(map[string][]interface{})
+	for i := 0; i < entriesVal.Len(); i++ {
+		v := reflect.Indirect(entriesVal.Index(i)).Interface()
+		labels := entriesVal.Index(i).Elem().FieldByName("Labels")
+		projectName := labels.MapIndex(reflect.ValueOf("com.docker.compose.project"))
+		if projectName.Kind() == reflect.String && projectName.String() == project {
+			value := labels.MapIndex(reflect.ValueOf("com.docker.compose.service"))
+			if value.Kind() == reflect.String {
+				groups[value.String()] = append(groups[value.String()], v)
+			}
+	  }
+	}
+	return groups, nil
+}
+
 // groupByKeys is the same as groupBy but only returns a list of keys
 func groupByKeys(entries interface{}, key string) ([]string, error) {
 	keys, err := generalizedGroupBy("groupByKeys", entries, key, func(groups map[string][]interface{}, value interface{}, v interface{}) {
@@ -352,6 +375,7 @@ func newTemplate(name string) *template.Template {
 		"exists":        exists,
 		"first":         arrayFirst,
 		"groupBy":       groupBy,
+		"groupByService":groupByService,
 		"groupByKeys":   groupByKeys,
 		"groupByMulti":  groupByMulti,
 		"hasPrefix":     hasPrefix,
